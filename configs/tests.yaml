@@ -1,0 +1,9 @@
+testVersion: 0.1a
+
+
+loadTester:
+    loadDataset: true
+
+visualTester:
+    shapeVisual: true
+    

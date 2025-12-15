@@ -1,0 +1,6 @@
+streamlit
+plotly
+datasets
+numpy
+matplotlib
+scipy
