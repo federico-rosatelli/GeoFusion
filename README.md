@@ -8,8 +8,15 @@
 
 ---
 
-## Overview
-This project implements a stellarator optimization pipeline using a "measure-and-optimize" approach. It features a physics-based optimizer and an interactive Streamlit GUI for parameter tuning and visualization.
+## About the Project
+GeoFusion is an interactive platform developed to assist in the geometric design and optimization of stellarators. Fusion energy relies on precise magnetic confinement, and the shape of the plasma boundary is critical to its success. This tool bridges the gap between theoretical physics and computational design, providing an intuitive interface to explore these complex geometries while balancing physical stability with engineering constraints.
+
+## Key Features
+*   **Dynamic 3D Visualization**: Inspect plasma boundaries in a fully interactive 3D environment, allowing for detailed analysis of surface curvature and topology.
+*   **Geometric Optimization**: Leverage physics-based algorithms to find optimal shapes, prioritizing either:
+    *   **Coil Simplicity**: Reducing the complexity of the external magnets to ensure build feasibility.
+    *   **MHD Stability**: Optimizing the geometry for stable plasma confinement.
+*   **Real-Time Feedback**: Adjust Fourier modes manually and instantly monitor key metrics—such as Aspect Ratio and Curvature—ensuring a tight feedback loop during the design process.
 
 ## Technologies Used
 ![Streamlit](https://img.shields.io/badge/Streamlit-FF4B4B?style=for-the-badge&logo=Streamlit&logoColor=white)
@@ -17,7 +24,15 @@ This project implements a stellarator optimization pipeline using a "measure-and
 ![NumPy](https://img.shields.io/badge/numpy-%23013243.svg?style=for-the-badge&logo=numpy&logoColor=white)
 ![SciPy](https://img.shields.io/badge/SciPy-%230C55A5.svg?style=for-the-badge&logo=scipy&logoColor=%23ffffff)
 
-## How to Run
-```bash
-streamlit run app/gui_app.py
-```
+## Getting Started
+To run the application locally, ensure you have the necessary dependencies installed:
+
+1.  **Install Requirements**
+    ```bash
+    pip install -r requirements.txt
+    ```
+
+2.  **Launch the Dashboard**
+    ```bash
+    streamlit run app/gui_app.py
+    ```

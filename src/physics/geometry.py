@@ -107,7 +107,11 @@ def calculate_aspect_ratio(R_mn, Z_mn):
         
     return abs(major_radius / minor_radius)
 
+
 def calculate_mirror_ratio(B_field):
+    """
+    Calculates the mirror ratio.
+    """
     if B_field is None or B_field.size == 0:
         return 0.0
         
@@ -115,6 +119,8 @@ def calculate_mirror_ratio(B_field):
     b_min = np.min(B_field)
     
     return (b_max - b_min) / (b_max + b_min)
+
+
 
 def calculate_curvature(surface_data):
     """
