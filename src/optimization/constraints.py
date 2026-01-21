@@ -2,7 +2,7 @@
 import numpy as np
 from src.physics import geometry
 
-def check_constraints(R_mn, Z_mn, config_constraints):
+def check_constraints(R_mn, Z_mn, config_constraints):  # TODO: add Max Elongation, Mirror Ratio, Rotational Transform and Quasi-Isodynamicity
     """
     Checks if the configuration satisfies the constraints.
     

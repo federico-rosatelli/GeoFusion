@@ -108,7 +108,7 @@ def calculate_aspect_ratio(R_mn, Z_mn):
     return abs(major_radius / minor_radius)
 
 
-def calculate_mirror_ratio(B_field):
+def calculate_mirror_ratio(B_field):    # TODO: integrate into the optimization loop
     """
     Calculates the mirror ratio.
     """

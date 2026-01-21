@@ -1,7 +1,7 @@
 
 import numpy as np
 
-def calculate_magnetic_field_proxy(surface_data):
+def calculate_magnetic_field_proxy(surface_data):   # TODO: Replace with actual magnetic field
     """
     Calculates a proxy magnetic field on the surface.
     
@@ -15,11 +15,6 @@ def calculate_magnetic_field_proxy(surface_data):
         np.ndarray: B field magnitude.
     """
     R = surface_data['R']
-    
-    
-    
-    
-    
     
     R_safe = np.where(R == 0, 1.0, R)
     B_mod = 1.0 / R_safe
