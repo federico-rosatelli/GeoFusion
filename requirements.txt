@@ -1,6 +1,10 @@
-datasets==4.5.0
-matplotlib==3.10.8
-numpy==2.4.1
-plotly==6.5.2
-scipy==1.17.0
-streamlit==1.53.0
+datasets
+matplotlib
+numpy
+plotly
+scipy
+streamlit
+torch
+tqdm
+constellaration
+scikit-learn
