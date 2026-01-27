@@ -64,10 +64,6 @@ def get_surface_coordinates(config_data, theta_res=64, phi_res=128):
             dZ_dphi -= Z_c * cos_angle * (n * N_fp)
 
     
-    
-    
-    
-    
     X = R * np.cos(phi_grid)
     Y = R * np.sin(phi_grid)
     
@@ -108,18 +104,75 @@ def calculate_aspect_ratio(R_mn, Z_mn):
     return abs(major_radius / minor_radius)
 
 
-def calculate_mirror_ratio(B_field):    # TODO: integrate into the optimization loop
-    """
-    Calculates the mirror ratio.
-    """
-    if B_field is None or B_field.size == 0:
-        return 0.0
-        
-    b_max = np.max(B_field)
-    b_min = np.min(B_field)
-    
-    return (b_max - b_min) / (b_max + b_min)
 
+def calculate_geometric_mirror_ratio(R_mn, Z_mn, n_field_periods=3, theta_res=64, phi_res=64):
+    """
+    Calculates the geometric mirror ratio of the magnetic field proxy.
+    Mirror Ratio = (B_max - B_min) / (B_max + B_min)
+    
+    Args:
+        R_mn (np.ndarray): Array of R_cos coefficients.
+        Z_mn (np.ndarray): Array of Z_sin coefficients.
+        theta_res (int): Resolution for surface grid.
+        phi_res (int): Resolution for surface grid.
+        
+    Returns:
+        float: Geometric mirror ratio.
+    """
+    config_data = {
+        'boundary.r_cos': R_mn,
+        'boundary.z_sin': Z_mn,
+        'boundary.n_field_periods': n_field_periods
+    }
+    
+    coords = get_surface_coordinates(config_data, theta_res=theta_res, phi_res=phi_res)
+    R = coords['R']
+    
+    R_max = np.max(R)
+    R_min = np.min(R)
+    
+    B_proxy_max = 1.0 / R_min
+    B_proxy_min = 1.0 / R_max
+    
+    mirror_ratio = (B_proxy_max - B_proxy_min) / (B_proxy_max + B_proxy_min)
+    
+    return mirror_ratio
+
+
+def calculate_volume(R_mn, Z_mn,n_field_periods=3, theta_res=64, phi_res=128):
+    """
+    Calculates the volume of the plasma enclosed by the surface using the Divergence Theorem.
+    V = 0.5 * integral( R^2 * dZ/dtheta ) dtheta dphi
+    
+    Args:
+        R_mn (np.ndarray): Array of R_cos coefficients.
+        Z_mn (np.ndarray): Array of Z_sin coefficients.
+        theta_res (int): Resolution for integration grid.
+        phi_res (int): Resolution for integration grid.
+        
+    Returns:
+        float: Volume in cubic meters.
+    """
+
+    config_data = {
+        'boundary.r_cos': R_mn,
+        'boundary.z_sin': Z_mn,
+        'boundary.n_field_periods': n_field_periods
+    }
+    
+    coords = get_surface_coordinates(config_data, theta_res=theta_res, phi_res=phi_res)
+    
+    R = coords['R']
+    dZ_dtheta = coords['dZ_dtheta']
+    
+    integrand = 0.5 * (R**2) * dZ_dtheta
+    
+    d_theta = (2 * np.pi) / theta_res
+    d_phi = (2 * np.pi) / phi_res
+    
+    volume = np.sum(integrand) * d_theta * d_phi
+    
+    return abs(volume)
 
 
 def calculate_curvature(surface_data):

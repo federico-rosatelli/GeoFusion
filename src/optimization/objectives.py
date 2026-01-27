@@ -1,6 +1,10 @@
-
 import numpy as np
 from src.physics import geometry, magnetic
+import torch
+
+DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+
+
 
 def calculate_coil_simplicity(R_mn, Z_mn, config_data_template):
     """
@@ -60,4 +64,23 @@ def calculate_mhd_stability(R_mn, Z_mn, config_data_template):
     return np.mean(curvature_data['H']**2)
 
 
-# TODO: add Vacuum Magnetic Well (W_MHD)
+def calculate_geo_fusion_nn(R_mn, Z_mn, model) -> float:               # TODO: implement better (only qi now)
+    """
+    Objectives: GeoFusion-nn (Using Neural Network surrogate model)
+
+    Args:
+        R_mn, Z_mn: Boundary coefficients.
+        model: Trained surrogate model.
+        
+    Returns:
+        float: Objective value.
+    """
+    input_vector = np.concatenate([R_mn.flatten(), Z_mn.flatten()])
+    input_vector = torch.tensor(input_vector, dtype=torch.float32)
+    input_vector = input_vector.unsqueeze(0)
+    
+    with torch.no_grad():
+        ai_input = input_vector.to(DEVICE).float()
+        pred = model(ai_input).item()
+
+    return pred

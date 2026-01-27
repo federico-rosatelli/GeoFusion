@@ -1,1 +1,30 @@
 version: 0.0.1a
+
+name: GeoFusion
+description: A framework for geometric data fusion and optimization using machine learning.
+
+ml:
+  device: cpu
+  ensemble:
+    model_struct:
+      qi:
+        layers: [1024, 512, 256, 128]
+        activation: gelu
+        filepath: models/qi_model.pth
+      well:
+        layers: [1024, 512, 256, 128]
+        activation: gelu
+        filepath: models/well_model.pth
+      mirror:
+        layers: [1024, 512, 256, 128]
+        activation: gelu
+        filepath: models/mirror_model.pth
+      iota:
+        layers: [1024, 512, 256, 128]
+        activation: gelu
+        filepath: models/iota_model.pth
+
+physics:
+  n_field_periods: 3
+  theta_res: 64
+  phi_res: 128

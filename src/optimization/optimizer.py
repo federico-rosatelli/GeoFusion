@@ -1,7 +1,11 @@
-
-from src.optimization import objectives, constraints
+from src.physics import geometry
+from src.optimization import objectives
 import numpy as np
 from scipy.optimize import minimize
+from src.ml.surrogate import StellaratorSurrogate
+import torch
+
+DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 def optimize_stellarator(initial_config, problem_type="simple-to-build", max_iter=100):
     """
@@ -24,8 +28,14 @@ def optimize_stellarator(initial_config, problem_type="simple-to-build", max_ite
     shape_R = R_mn_init.shape
     shape_Z = Z_mn_init.shape
     
-    
+    target_volume = geometry.calculate_volume(R_mn_init, Z_mn_init)
     x0 = np.concatenate([R_mn_init.flatten(), Z_mn_init.flatten()])
+
+    
+    model = StellaratorSurrogate(input_shape=x0.shape, hidden_dims=[1024, 512, 256, 128])
+    model.load_state_dict(torch.load("models/surrogate/stellarator_surrogate.pth", map_location=DEVICE))
+    model.to(DEVICE)
+    model.eval()
     
     def reshape_coeffs(x):
         split = R_mn_init.size
@@ -38,7 +48,10 @@ def optimize_stellarator(initial_config, problem_type="simple-to-build", max_ite
         R_mn, Z_mn = reshape_coeffs(x)
         
         
-        if problem_type == "simple-to-build":
+        if problem_type == "GeoFusion-nn":
+            objectives.calculate_geo_fusion_nn(R_mn, Z_mn, model)
+
+        elif problem_type == "simple-to-build":
             
             val = objectives.calculate_coil_simplicity(R_mn, Z_mn, initial_config)
         else:
@@ -53,18 +66,35 @@ def optimize_stellarator(initial_config, problem_type="simple-to-build", max_ite
 
 
     
-    
+    bounds = [(-5.0, 5.0) for _ in range(len(x0))]
     
     def min_aspect_ratio_constraint(x):
         R_mn, Z_mn = reshape_coeffs(x)
-        violations = constraints.check_constraints(R_mn, Z_mn, {'min_aspect_ratio': 6.0})
-        
-        from src.physics import geometry
         ar = geometry.calculate_aspect_ratio(R_mn, Z_mn)
         return ar - 6.0 
+
+    
+    def volume_constraint_lower(x):
+        R_mn, Z_mn = reshape_coeffs(x)
+        vol = geometry.calculate_volume(R_mn, Z_mn)
+        return vol - (target_volume * 0.95)
+
+    def volume_constraint_upper(x):
+        R_mn, Z_mn = reshape_coeffs(x)
+        vol = geometry.calculate_volume(R_mn, Z_mn)
+        return (target_volume * 1.05) - vol
+    
+    def max_mirror_ratio_constraint(x):
+        R_mn, Z_mn = reshape_coeffs(x)
+        mr = geometry.calculate_geometric_mirror_ratio(R_mn, Z_mn)
+        TARGET_MR = 0.08
+        return TARGET_MR - mr
         
     cons = (
         {'type': 'ineq', 'fun': min_aspect_ratio_constraint},
+        {'type': 'ineq', 'fun': volume_constraint_lower},
+        {'type': 'ineq', 'fun': volume_constraint_upper},
+        {'type': 'ineq', 'fun': max_mirror_ratio_constraint}
     )
     
     
@@ -74,20 +104,17 @@ def optimize_stellarator(initial_config, problem_type="simple-to-build", max_ite
         history.append(val)
     
     
-    print(f"Initial Loss: {loss_function(x0)}")
-    
     
     res = minimize(
         loss_function, 
         x0, 
         method='SLSQP', 
+        bounds=bounds,
         constraints=cons,
         callback=callback,
         options={'maxiter': max_iter, 'disp': True}
     )
     
-    print(f"Optimization finished. Success: {res.success}, Message: {res.message}")
-    print(f"Final Loss: {res.fun}")
     
     
     R_opt, Z_opt = reshape_coeffs(res.x)

@@ -1,4 +1,3 @@
-
 import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -21,6 +20,14 @@ def load_data():
     return dataset
 
 def plot_surface_plotly(X, Y, Z):
+    X = np.concatenate((X, X[0:1, :]), axis=0)
+    Y = np.concatenate((Y, Y[0:1, :]), axis=0)
+    Z = np.concatenate((Z, Z[0:1, :]), axis=0)
+
+    X = np.concatenate((X, X[:, 0:1]), axis=1)
+    Y = np.concatenate((Y, Y[:, 0:1]), axis=1)
+    Z = np.concatenate((Z, Z[:, 0:1]), axis=1)
+
     fig = go.Figure(data=[go.Surface(x=X, y=Y, z=Z, colorscale='Viridis', opacity=0.9)])
     fig.update_layout(title='Plasma Boundary', autosize=True,
                       scene=dict(
@@ -134,6 +141,7 @@ def main():
                 if 0 <= m < arr.shape[0] and 0 <= idx < arr.shape[1]:
                     arr[m, idx] = val
                     st.session_state.current_config[arr_name] = arr.tolist()
+                    print(arr)
 
 
             def synced_parameter(label, arr_name, m, n, min_v, max_v, step):
@@ -181,15 +189,59 @@ def main():
 
 
             
-            synced_parameter("R(0,0) [Major]", 'boundary.r_cos', 0, 0, 0.1, 10.0, 0.1)
-            synced_parameter("R(1,0) [Minor]", 'boundary.r_cos', 1, 0, -2.0, 2.0, 0.05)
-            synced_parameter("Z(1,0) [Elong]", 'boundary.z_sin', 1, 0, -2.0, 2.0, 0.05)
+            st.markdown("**Global Size**")
+            synced_parameter("R(0,0) [Major Radius]", 'boundary.r_cos', m=0, n=0, min_v=0.5, max_v=15.0, step=0.1)
+
+            st.markdown("**Cross Section Shape**")
+            synced_parameter("R(1,0) [Minor Radius]", 'boundary.r_cos', m=1, n=0, min_v=-3.0, max_v=3.0, step=0.05)
+            # synced_parameter("Z(1,0) [Elongation]", 'boundary.z_sin', m=1, n=0, min_v=-3.0, max_v=3.0, step=0.05)
+
+            st.markdown("**3D Helical Shaping (Twist)**")
+            synced_parameter("R(1,1) [Helical R]", 'boundary.r_cos', m=1, n=1, min_v=-2.0, max_v=2.0, step=0.05)
+            synced_parameter("Z(1,1) [Helical Z]", 'boundary.z_sin', m=1, n=1, min_v=-2.0, max_v=2.0, step=0.05)
             
-            synced_parameter("R(0,1) [Ripple]", 'boundary.r_cos', 0, 1, -1.0, 1.0, 0.05)
 
         st.divider()
+        with st.expander("Import JSON Config", expanded=False):
+            tab_upload, tab_paste = st.tabs(["Upload File", "Paste Text"])
+            
+            with tab_upload:
+                uploaded_file = st.file_uploader("Choose JSON File", type=["json"])
+                if uploaded_file is not None:
+                    if st.button("Load from File", key="btn_load_file"):
+                        try:
+                            import json
+                            data = json.load(uploaded_file)
+                            if 'boundary.r_cos' in data and 'boundary.z_sin' in data:
+                                st.session_state.current_config = data
+                                st.success("Config loaded!")
+                                st.rerun()
+                            else:
+                                st.error("Invalid JSON: missing boundary coefficients")
+                        except Exception as e:
+                            st.error(f"Error: {e}")
+
+            with tab_paste:
+                json_text = st.text_area("Paste JSON here", height=150)
+                if st.button("Load from Text", key="btn_load_text"):
+                    try:
+                        import json
+                        data = json.loads(json_text)
+                        if 'boundary.r_cos' in data and 'boundary.z_sin' in data:
+                            st.session_state.current_config = data
+                            st.success("Config loaded!")
+                            st.rerun()
+                        else:
+                            st.error("Invalid JSON")
+                    except Exception as e:
+                        st.error(f"Error parsing JSON: {e}")
+
+        current_config = st.session_state.current_config
+
+        st.divider()
+
         st.header("Optimization")
-        problem_type = st.selectbox("Objective", ["simple-to-build", "mhd-stable"])
+        problem_type = st.selectbox("Objective", ["simple-to-build", "mhd-stable", "GeoFusion-nn"], index=0)
         max_iter = st.number_input("Iterations", 1, 500, 20)
         
         if st.button("Start Optimization", type="primary"):

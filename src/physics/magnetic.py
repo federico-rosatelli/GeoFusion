@@ -1,11 +1,10 @@
 
 import numpy as np
 
-def calculate_magnetic_field_proxy(surface_data):   # TODO: Replace with actual magnetic field
+def calculate_magnetic_field_proxy(surface_data):   # TODO: replace with actual magnetic field
     """
     Calculates a proxy magnetic field on the surface.
     
-    Assumption:
     Toroidal field dominates B ~ B0 * R0 / R
     
     Args:
@@ -14,6 +13,7 @@ def calculate_magnetic_field_proxy(surface_data):   # TODO: Replace with actual 
     Returns:
         np.ndarray: B field magnitude.
     """
+
     R = surface_data['R']
     
     R_safe = np.where(R == 0, 1.0, R)
