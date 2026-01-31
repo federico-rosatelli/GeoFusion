@@ -2,10 +2,18 @@ from src.physics import geometry
 from src.optimization import objectives
 import numpy as np
 from scipy.optimize import minimize
-from src.ml.surrogate import StellaratorSurrogate
+from src.ml.ensamble import StellaratorEnsemble
 import torch
 
-DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+WEIGHTS = {
+    'qi': 1.0,
+    'well': 50.0,
+    'mirror': 2.0,
+    'iota': 5.0,
+    'reg': 0.05,
+}
+
+TARGET_IOTA = 0.42
 
 def optimize_stellarator(initial_config, problem_type="simple-to-build", max_iter=100):
     """
@@ -32,10 +40,8 @@ def optimize_stellarator(initial_config, problem_type="simple-to-build", max_ite
     x0 = np.concatenate([R_mn_init.flatten(), Z_mn_init.flatten()])
 
     
-    model = StellaratorSurrogate(input_shape=x0.shape, hidden_dims=[1024, 512, 256, 128])
-    model.load_state_dict(torch.load("models/surrogate/stellarator_surrogate.pth", map_location=DEVICE))
-    model.to(DEVICE)
-    model.eval()
+    models = StellaratorEnsemble("configs/conf.yaml")
+    models.load_models()
     
     def reshape_coeffs(x):
         split = R_mn_init.size
@@ -49,7 +55,27 @@ def optimize_stellarator(initial_config, problem_type="simple-to-build", max_ite
         
         
         if problem_type == "GeoFusion-nn":
-            objectives.calculate_geo_fusion_nn(R_mn, Z_mn, model)
+            metrics_val = objectives.calculate_geo_fusion_nn(R_mn, Z_mn, models)
+
+            qi = metrics_val['qi'].item()
+            well = metrics_val['w_mhd'].item()
+            mirror = metrics_val['mirror_ratio'].item()
+            iota = metrics_val['iota_edge'].item()
+
+            cost_qi = qi * WEIGHTS['qi']
+
+        
+            cost_well = torch.nn.functional.relu(torch.tensor(-well)).item() * WEIGHTS['well']
+            
+            cost_mirror = torch.nn.functional.relu(torch.tensor(mirror - 0.1)).item() * WEIGHTS['mirror']
+            
+            cost_iota = ((iota - TARGET_IOTA) ** 2) * WEIGHTS['iota']
+
+            cost_reg = np.sum(x**2) * WEIGHTS['reg'] * 1e-4
+            cost = cost_qi + cost_well + cost_mirror + cost_iota + cost_reg
+            print(f"Current Cost: {cost:.4f}")
+            
+            return cost
 
         elif problem_type == "simple-to-build":
             

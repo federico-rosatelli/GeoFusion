@@ -49,3 +49,6 @@ data/*.json
 *.log
 logs/
 data.json
+*_model.pth
+*.pth
+*csv

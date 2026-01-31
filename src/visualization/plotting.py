@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import os
 from src.io.loader import load_constellaration_dataset
 
 from src.physics.geometry import get_surface_coordinates
@@ -40,3 +41,29 @@ if __name__ == "__main__":
     surface_data = get_surface_coordinates(sample_config)
     X, Y, Z = surface_data['X'], surface_data['Y'], surface_data['Z']
     plot_stellarator_shape(X, Y, Z)
+
+
+
+def plot_loss(metric_name, loss_history):
+    
+    try:
+        
+        plt.figure(figsize=(8, 5))
+        
+        plt.plot(range(1, len(loss_history) + 1), loss_history, 'o-', color='#d62728', linewidth=2, markersize=5, label='MSE Loss')
+
+        plt.title(f"Training Loss: {metric_name.upper()}", fontsize=14, fontweight='bold', pad=15)
+        plt.xlabel("Epochs", fontsize=12)
+        plt.ylabel("MSE Loss", fontsize=12)
+        plt.yscale('log')
+        plt.grid(True, which="both", ls="--", alpha=0.3)
+        
+        plt.tight_layout()
+        
+        plot_dir = "public/images"
+        filename = f"{metric_name}_loss_plot.png"
+        file_path = os.path.join(plot_dir, filename)
+        plt.savefig(file_path, dpi=300)
+        
+    except Exception as e:
+        print(f"Error loading or plotting loss data: {e}")

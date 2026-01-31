@@ -4,36 +4,33 @@ import torch.optim as optim
 from tqdm import tqdm
 
 class StellaratorSurrogate(nn.Module):
-    def __init__(self, input_shape, hidden_dims=[512, 512, 256]):
+    def __init__(self, input_shape, hidden_dims, activation='GELU'):
         """
         Sequential Neural Network for QI regression
         
         Args:
             input_shape (int): shape of the flattened coefficients vector
             hidden_dims (list): list of hidden layer dimensions
+            activation (str): activation function to use ('GELU' or 'ReLU')
         """
         super(StellaratorSurrogate, self).__init__()
-        self.flat_dim = 1
-        for d in input_shape:
-            self.flat_dim *= d
         layers = []
-        layers.append(nn.Flatten())
+        in_dim = input_shape
+        self.flatten = nn.Flatten()
         
-        in_channels = self.flat_dim
+        act_fn = nn.GELU() if activation.lower() == "gelu" else nn.ReLU()
         
         for h_dim in hidden_dims:
-            layers.append(nn.Linear(in_channels, h_dim))
-            layers.append(nn.GELU())  
-            layers.append(nn.BatchNorm1d(h_dim)) 
-            layers.append(nn.Dropout(0.1)) 
-            in_channels = h_dim
+            layers.append(nn.Linear(in_dim, h_dim))
+            layers.append(act_fn)
+            in_dim = h_dim
         
-        layers.append(nn.Linear(in_channels, 1))
-        
+        layers.append(nn.Linear(in_dim, 1))
         self.net = nn.Sequential(*layers)
     
 
     def forward(self, x):
+        x = self.flatten(x)
         return self.net(x)
 
 

@@ -14,7 +14,7 @@ class StellaratorDataset(Dataset):
     """
     def __init__(self, X, y, transform=None):
         self.X = X
-        self.y = torch.tensor(y, dtype=torch.float32).unsqueeze(1) # (N, 1)
+        self.y = y
         self.transform = transform
         self.scaler_X = StandardScaler()
 
@@ -40,13 +40,21 @@ class StellaratorDataModule:
     """
     DataModule for ConStellaration.
     """
+    target_cols = [
+        ('metrics.aspect_ratio','aspect_ratio'),
+        ('metrics.edge_rotational_transform_over_n_field_periods','iota_edge'),
+        ('metrics.edge_magnetic_mirror_ratio','mirror_ratio'),
+        ('metrics.qi','qi'),
+        ('metrics.vacuum_well','w_mhd'),
+        ('metrics.flux_compression_in_regions_of_bad_curvature','flux_compression'),
+        ('metrics.max_elongation','max_elongation'),
+        ('metrics.minimum_normalized_magnetic_gradient_scale_length','min_mag_grad_length'),
+    ]
+
     def __init__(self, batch_size=64, seed=42):
         self.batch_size = batch_size
         self.seed = seed
-        
-        self.train_ds = None
-
-        self.scaler_X = StandardScaler()
+        pass
 
     def _extract_coefficients(self, row):
         """
@@ -71,38 +79,40 @@ class StellaratorDataModule:
         
         print(f"Dataset loaded: {len(df)} samples.")
         
-        target_col = 'metrics.qi'
+        #target_col = 'metrics.qi'
+
         
-        
-        if target_col not in df.columns:
-            if 'metrics' in df.columns and isinstance(df.iloc[0]['metrics'], dict):
-                df[target_col] = df['metrics'].apply(lambda x: x.get('qi') if x else np.nan)
+        for target_col in self.target_cols:
+            if target_col[0] not in df.columns:
+                if 'metrics' in df.columns and isinstance(df.iloc[0]['metrics'], dict):
+                    df[target_col[0]] = df['metrics'].apply(lambda x: x.get(target_col[0]) if x else np.nan)
         
         n_before = len(df)
-        df = df.dropna(subset=[target_col])
+        for target_col in self.target_cols:
+            df = df.dropna(subset=[target_col[0]])
         print(f"{n_before - len(df)} invalid samples (NaN). Total: {len(df)}")
 
         X_list = []
         y_list = []
-        y_sample = {
-                'iota': df['metrics.edge_rotational_transform_over_n_field_periods'],
-                'mirror': df['metrics.edge_magnetic_mirror_ratio'],
-                'qi': df['metrics.qi'],
-                'well': df['metrics.vacuum_well']
-            }
-        
+
         for _, row in tqdm(df.iterrows(), desc="Extracting features", total=len(df)):
             try:
                 comps = self._extract_coefficients(row)
                 X_list.append(comps)
-                y_list.append(row[target_col])  #TODO: implement for other metrics
+                y_dict = {}
+                for target_col in self.target_cols:
+                    if target_col[1] == 'w_mhd':
+                        y_dict[target_col[1]] = row[target_col[0]] / 4.0
+                    else:
+                        y_dict[target_col[1]] = row[target_col[0]]
+                y_list.append(y_dict)
             except Exception as e:
                 print(f"Error processing row: {e}")
                 continue
 
-        y = np.array(y_list)
+
         X = np.array(X_list)
-        return X, y
+        return X, y_list
 
     def setup(self):
         X, y = self.load_and_process_data()
@@ -120,6 +130,9 @@ class StellaratorDataModule:
         return DataLoader(
             self.train_ds, 
             batch_size=self.batch_size, 
-            shuffle=False, 
+            shuffle=False,
             num_workers=0
         )
+    
+    def get_dim_input(self):
+        return self.train_ds.X[0].shape

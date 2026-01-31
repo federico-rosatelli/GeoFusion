@@ -64,7 +64,7 @@ def calculate_mhd_stability(R_mn, Z_mn, config_data_template):
     return np.mean(curvature_data['H']**2)
 
 
-def calculate_geo_fusion_nn(R_mn, Z_mn, model) -> float:               # TODO: implement better (only qi now)
+def calculate_geo_fusion_nn(R_mn, Z_mn, models) -> float:               # TODO: implement better (only qi now)
     """
     Objectives: GeoFusion-nn (Using Neural Network surrogate model)
 
@@ -73,14 +73,13 @@ def calculate_geo_fusion_nn(R_mn, Z_mn, model) -> float:               # TODO: i
         model: Trained surrogate model.
         
     Returns:
-        float: Objective value.
+        dict: Predicted metrics.
     """
     input_vector = np.concatenate([R_mn.flatten(), Z_mn.flatten()])
     input_vector = torch.tensor(input_vector, dtype=torch.float32)
     input_vector = input_vector.unsqueeze(0)
     
-    with torch.no_grad():
-        ai_input = input_vector.to(DEVICE).float()
-        pred = model(ai_input).item()
+    ai_input = input_vector.to(DEVICE).float()
+    preds = models.predict(ai_input)
 
-    return pred
+    return preds
