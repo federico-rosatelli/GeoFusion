@@ -1,6 +1,6 @@
 import torch
 import numpy as np
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import Dataset, DataLoader, random_split
 from sklearn.preprocessing import StandardScaler
 from tqdm import tqdm
 from src.io.loader import load_constellaration_dataset
@@ -123,14 +123,26 @@ class StellaratorDataModule:
         # X_scaled = self.scaler_X.transform(X)
         #X_scaled = self.scaler_X.fit_transform(X)
         self.train_ds = StellaratorDataset(X, y)
+
+        # x_val, y_val = self.load_validation_data()
+        # self.val_ds = StellaratorDataset(x_val, y_val)
         
         print(f"Training Set Size: {len(self.train_ds)}")
+        #print(f"Validation Set Size: {len(self.val_ds)}")
 
     def get_loader(self):
+        train_size = int(0.8 * len(self.train_ds))
+        val_size = len(self.train_ds) - train_size
+        train_dataset, val_dataset = random_split(self.train_ds, [train_size, val_size])
         return DataLoader(
-            self.train_ds, 
+            train_dataset, 
             batch_size=self.batch_size, 
-            shuffle=False,
+            shuffle=True,
+            num_workers=0
+        ), DataLoader(
+            val_dataset, 
+            batch_size=self.batch_size, 
+            shuffle=True,
             num_workers=0
         )
     

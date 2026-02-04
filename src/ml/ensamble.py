@@ -25,10 +25,10 @@ class StellaratorEnsemble:
             
             model = StellaratorSurrogate(input_dim, layers, act).to(self.device)
             self.models[metric] = model
-            self.loss_histories[metric] = []
+            self.loss_histories[metric] = {}
             
     
-    def train_model(self, metric, train_loader):
+    def train_model(self, metric, train_loader, val_loader=None):
         mdfcfg = self.models_conf[metric]
         save_path = mdfcfg['filepath']
         if not self.force_retrain and os.path.exists(save_path):
@@ -37,9 +37,9 @@ class StellaratorEnsemble:
         
         cfg = mdfcfg["train"]
         model = self.models[metric]
-        trained_model, loss_history = train_model(model, train_loader, metric, cfg["epochs"], lr=float(cfg["learning_rate"]), device=self.device)
+        trained_model, history = train_model(model, train_loader, val_loader, metric, cfg["epochs"], lr=float(cfg["learning_rate"]), device=self.device)
         self.models[metric] = trained_model
-        self.loss_histories[metric] = loss_history
+        self.loss_histories[metric] = history
         return trained_model
     
     def save_model(self, metric):
@@ -52,10 +52,11 @@ class StellaratorEnsemble:
         return save_path
     
     def save_loss_log(self, metric):
+        epochs = self.models_conf[metric]["train"]["epochs"]
         model_path = self.models_conf[metric]["filepath"]
         history = self.loss_histories[metric]
-        if not self.force_retrain and os.path.exists(model_path):
-            print(f"Force_retrain is False for metric '{metric}'. Skipping loss log save.")
+        if self.loss_histories[metric] == {}:
+            print(f"No loss history available for metric '{metric}'. Skipping loss log save.")
             return None
         base_path, _ = os.path.splitext(model_path)
         log_path = f"{base_path}_loss.csv"
@@ -63,9 +64,9 @@ class StellaratorEnsemble:
         try:
             with open(log_path, 'w', newline='') as f:
                 writer = csv.writer(f)
-                writer.writerow(['epoch', 'loss'])
-                for i, loss_val in enumerate(history):
-                    writer.writerow([i + 1, loss_val])
+                writer.writerow(['epoch', 'train_loss', 'val_loss', 'val_accuracy'])
+                for i in range(epochs):
+                    writer.writerow([i + 1, history['train_loss'][i], history['val_loss'][i], history['val_accuracy'][i]])
         except Exception as e:
             print(f"Error saving loss log for {metric}: {e}")
     

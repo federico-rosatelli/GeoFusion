@@ -10,7 +10,7 @@ WEIGHTS = {
     'well': 50.0,
     'mirror': 2.0,
     'iota': 5.0,
-    'reg': 0.05,
+    'reg': 0.1,
 }
 
 TARGET_IOTA = 0.42

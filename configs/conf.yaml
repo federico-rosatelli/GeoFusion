@@ -1,4 +1,4 @@
-version: 0.0.1a
+version: 0.1b
 name: GeoFusion
 description: Configuration for Stellarator Optimization Ensemble
 
@@ -9,7 +9,7 @@ ml:
     default:
       input_dim: 90
       train:
-        batch_size: 128
+        batch_size: 256
         epochs: 15
         learning_rate: 1e-3
         layers: [1024, 512, 256, 128]
@@ -20,13 +20,13 @@ ml:
         filepath: "models/qi_model.pth"
         train:
           learning_rate: 1e-4
-          layers: [1024, 512, 256, 512, 128, 64]
+          layers: [2048, 1024, 512, 128, 512, 256, 128, 64, 16]
 
       w_mhd:
         filepath: "models/w_mhd_model.pth"
         train:
           learning_rate: 1e-4
-          layers: [1024, 512, 256, 512, 128, 64]
+          layers: [1024, 512, 256, 128, 512, 256, 128, 32]
 
       mirror_ratio:
         filepath: "models/mirror_ratio_model.pth"
