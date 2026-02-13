@@ -10,10 +10,10 @@ from src.visualization.plotting import plot_loss
 class StellaratorEnsemble:
     """Ensemble of surrogate models for uncertainty estimation"""
     
-    def __init__(self, config_path):
+    def __init__(self, config_yaml_path, config_json_path):
 
         self.models = {}
-        self.models_conf, device_name, self.force_retrain = load_config(config_path)
+        self.models_conf, device_name, self.force_retrain = load_config(config_yaml_path, config_json_path)
         self.device = torch.device(device_name if torch.cuda.is_available() else "cpu")
         self.models = {}
         self.loss_histories = {}
@@ -22,8 +22,9 @@ class StellaratorEnsemble:
             input_dim = cfg['input_dim']
             layers = cfg['train']['layers']
             act = cfg['train']['activation']
+            structure = cfg.get('structure', None)
             
-            model = StellaratorSurrogate(input_dim, layers, act).to(self.device)
+            model = StellaratorSurrogate(input_dim, layers, act, structure=structure).to(self.device)
             self.models[metric] = model
             self.loss_histories[metric] = {}
             

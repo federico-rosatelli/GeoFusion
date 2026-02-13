@@ -10,6 +10,8 @@ WEIGHTS = {
     'well': 50.0,
     'mirror': 2.0,
     'iota': 5.0,
+    'coil': 2.0,
+    'mhd_curv': 1.5,
     'reg': 0.1,
 }
 
@@ -40,7 +42,7 @@ def optimize_stellarator(initial_config, problem_type="simple-to-build", max_ite
     x0 = np.concatenate([R_mn_init.flatten(), Z_mn_init.flatten()])
 
     
-    models = StellaratorEnsemble("configs/conf.yaml")
+    models = StellaratorEnsemble("configs/conf.yaml", "configs/model_structs.json")
     models.load_models()
     
     def reshape_coeffs(x):
@@ -66,14 +68,15 @@ def optimize_stellarator(initial_config, problem_type="simple-to-build", max_ite
 
         
             cost_well = torch.nn.functional.relu(torch.tensor(-well)).item() * WEIGHTS['well']
-            
             cost_mirror = torch.nn.functional.relu(torch.tensor(mirror - 0.1)).item() * WEIGHTS['mirror']
-            
             cost_iota = ((iota - TARGET_IOTA) ** 2) * WEIGHTS['iota']
-
+            cost_coil = objectives.calculate_coil_simplicity(R_mn, Z_mn, initial_config) * WEIGHTS['coil']
+            cost_mhd = objectives.calculate_mhd_stability(R_mn, Z_mn, initial_config) * WEIGHTS['mhd_curv']
             cost_reg = np.sum(x**2) * WEIGHTS['reg'] * 1e-4
-            cost = cost_qi + cost_well + cost_mirror + cost_iota + cost_reg
-            print(f"Current Cost: {cost:.4f}")
+
+
+            cost = cost_qi + cost_well + cost_mirror + cost_iota + cost_coil + cost_mhd + cost_reg
+            print(f"Cost: {cost:.4f} (QI:{cost_qi:.3f} | Coil:{cost_coil:.3f} | MHD:{cost_mhd:.3f})", end="\033[K\r")
             
             return cost
 
