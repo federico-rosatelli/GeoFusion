@@ -19,7 +19,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--struct",
         type=str,
-        default="configs/model_structs.json",
+        default="configs/model_struct.json",
         help="Path to the model architecture JSON file."
     )
     parser.add_argument(
