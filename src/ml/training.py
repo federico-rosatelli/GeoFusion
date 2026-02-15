@@ -22,7 +22,7 @@ def train_model(model, train_loader, val_loader, target, epochs=10, lr=1e-3, dev
 
     print(f"Starting training on device: {device}")
     history = {'train_loss': [], 'val_loss': [], 'val_accuracy': []}
-    # logger = getLogger("production")
+    logger = getLogger("production")
     
     for epoch in range(epochs):
         total_loss = 0.0
@@ -87,6 +87,7 @@ def train_model(model, train_loader, val_loader, target, epochs=10, lr=1e-3, dev
         current_lr = optimizer.param_groups[0]['lr']
         scheduler.step(avg_loss)
         print(f"\tEpoch {epoch+1} Summary | Avg Loss: {avg_loss:.6f} | Val Loss: {avg_val_loss:.6f} | Val Accuracy: {val_accuracy:.6f} | LR: {current_lr:.1e}")
+        logger.info(f"\tEpoch {epoch+1} Summary | Avg Loss: {avg_loss:.6f} | Val Loss: {avg_val_loss:.6f} | Val Accuracy: {val_accuracy:.6f} | LR: {current_lr:.1e}")
 
     print("Training completed.")
     return model, history

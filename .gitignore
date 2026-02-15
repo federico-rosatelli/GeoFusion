@@ -47,7 +47,7 @@ venv.bak/
 data/.cache_dir/
 data/*.json
 *.log
-logs/
+
 data.json
 *_model.pth
 *.pth
