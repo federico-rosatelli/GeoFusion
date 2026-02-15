@@ -37,8 +37,11 @@ class NeuralManager:
         try:
             
             dm = StellaratorDataModule() 
+            print("Preparing data...")
             dm.setup()
+            print("Data prepared.")
             train_loader, val_loader = dm.get_loader()
+            print("Data loaders ready.")
             return train_loader, val_loader
         
         except Exception as e:
