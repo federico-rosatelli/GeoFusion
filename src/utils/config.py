@@ -14,7 +14,7 @@ def getConfigJSON(conf_path:str) -> any:
     return config
 
 
-def getLogger(name:str, config_file:str="config/logger.yaml", filename=None) -> logging.Logger:
+def getLogger(name:str, config_file:str="configs/logger.yaml", filename=None) -> logging.Logger:
     
     config = getConfigYAML(config_file)
     if name == "staging" or name == "production":

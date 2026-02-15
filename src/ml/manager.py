@@ -65,7 +65,7 @@ class NeuralManager:
             print(f"Training model for metric '{metric}'...")
             self.models.train_model(metric, self.train_loader, self.val_loader)
             self.models.save_model(metric)
-            #self.models.save_loss_log(metric)
+            self.models.save_loss_log(metric)
             print(f"Model for metric '{metric}' trained and saved successfully.")
         
         except Exception as e:
