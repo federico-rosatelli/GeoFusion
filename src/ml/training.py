@@ -4,6 +4,7 @@ import torch.optim as optim
 from tqdm import tqdm
 import torch
 import numpy as np
+from src.utils.config import getLogger
 
 
 def train_model(model, train_loader, val_loader, target, epochs=10, lr=1e-3, device="cpu"):
@@ -21,6 +22,7 @@ def train_model(model, train_loader, val_loader, target, epochs=10, lr=1e-3, dev
 
     print(f"Starting training on device: {device}")
     history = {'train_loss': [], 'val_loss': [], 'val_accuracy': []}
+    # logger = getLogger("production")
     
     for epoch in range(epochs):
         total_loss = 0.0
