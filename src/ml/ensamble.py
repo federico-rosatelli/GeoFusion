@@ -10,7 +10,7 @@ from src.visualization.plotting import plot_loss
 class StellaratorEnsemble:
     """Ensemble of surrogate models for uncertainty estimation"""
     
-    def __init__(self, config_yaml_path, config_json_path):
+    def __init__(self, config_yaml_path:str, config_json_path:str):
 
         self.models = {}
         self.models_conf, device_name, self.force_retrain = load_config(config_yaml_path, config_json_path)

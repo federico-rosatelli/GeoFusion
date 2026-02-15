@@ -6,5 +6,4 @@ scipy
 streamlit
 torch
 tqdm
-constellaration
 scikit-learn
