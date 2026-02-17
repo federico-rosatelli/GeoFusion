@@ -6,6 +6,8 @@ import numpy as np
 import plotly.graph_objects as go
 from src.io.loader import load_constellaration_dataset
 from src.optimization.optimizer import optimize_stellarator
+from src.ml.ensamble import StellaratorEnsemble
+import torch
 from src.physics import geometry
 from src.optimization import objectives
 
@@ -18,6 +20,12 @@ def load_data():
     if not dataset:
         return None
     return dataset
+
+@st.cache_resource
+def load_models():
+    models = StellaratorEnsemble("configs/conf.yaml", "configs/model_struct.json")
+    models.load_models()
+    return models
 
 def plot_surface_plotly(X, Y, Z):
     X = np.concatenate((X, X[0:1, :]), axis=0)
@@ -105,6 +113,8 @@ def main():
     if not dataset:
         st.error("Could not load dataset.")
         return
+    
+    models = load_models()
 
     with st.sidebar:
         st.header("Configuration")
@@ -260,14 +270,6 @@ def main():
     R_init = np.array(initial_c['boundary.r_cos'])
     Z_init = np.array(initial_c['boundary.z_sin'])
     
-    ar = geometry.calculate_aspect_ratio(R_mn, Z_mn)
-    ar0 = geometry.calculate_aspect_ratio(R_init, Z_init)
-    
-    comp = objectives.calculate_coil_simplicity(R_mn, Z_mn, st.session_state.current_config)
-    comp0 = objectives.calculate_coil_simplicity(R_init, Z_init, initial_c)
-    
-    mhd = objectives.calculate_mhd_stability(R_mn, Z_mn, st.session_state.current_config)
-    mhd0 = objectives.calculate_mhd_stability(R_init, Z_init, initial_c)
 
     st.subheader("Interactive 3D View")
     surface_data = geometry.get_surface_coordinates(st.session_state.current_config)
@@ -283,20 +285,75 @@ def main():
             zaxis=dict(backgroundcolor="#0E1117", gridcolor="#444", showbackground=True, zerolinecolor="#444"),
         )
     )
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width='stretch')
 
-    m1, m2, m3 = st.columns(3)
-    m1.metric("Aspect Ratio", f"{ar:.2f}", f"{ar-ar0:.2f}")
-    m2.metric("Coil Complexity", f"{comp:.4f}", f"{comp-comp0:.4f}", delta_color="inverse")
-    m3.metric("MHD Stability (Curvature)", f"{mhd:.4f}", f"{mhd-mhd0:.4f}", delta_color="inverse")
+    ar = geometry.calculate_aspect_ratio(R_mn, Z_mn)
+    vol = geometry.calculate_volume(R_mn, Z_mn)
+    mr = geometry.calculate_geometric_mirror_ratio(R_mn, Z_mn)
+    mr = geometry.calculate_geometric_mirror_ratio(R_mn, Z_mn)
+    
+    # Model predictions
+    input_vector = np.concatenate([R_mn.flatten(), Z_mn.flatten()])
+    input_tensor = torch.tensor(input_vector, dtype=torch.float32).unsqueeze(0).to(models.device)
+    preds = models.predict(input_tensor)
+    
+    mhd = preds['w_mhd'].item()
+    
+    R_init = np.array(st.session_state.current_config['boundary.r_cos'])
+    Z_init = np.array(st.session_state.current_config['boundary.z_sin'])
+    
+    ar0 = geometry.calculate_aspect_ratio(R_init, Z_init)
+    vol0 = geometry.calculate_volume(R_init, Z_init)
+    mr0 = geometry.calculate_geometric_mirror_ratio(R_init, Z_init)
+    mr0 = geometry.calculate_geometric_mirror_ratio(R_init, Z_init)
+    
+    input_vector0 = np.concatenate([R_init.flatten(), Z_init.flatten()])
+    input_tensor0 = torch.tensor(input_vector0, dtype=torch.float32).unsqueeze(0).to(models.device)
+    preds0 = models.predict(input_tensor0)
+    
+    mhd0 = preds0['w_mhd'].item()
+
+    st.markdown("### Metrics Dashboard")
+    
+    m1, m2, m3, m4 = st.columns(4)
+    
+    m1.metric(
+        label="Aspect Ratio", 
+        value=f"{ar:.2f}", 
+        delta=f"{ar-ar0:.2f}",
+        help="Aspect ratio of the stellarator"
+    )
+    
+    m2.metric(
+        label="Volume [m³]", 
+        value=f"{vol:.3f}", 
+        delta=f"{vol-vol0:.3f}",
+        help="Volume of the stellarator"
+    )
+    
+    m3.metric(
+        label="Mirror Ratio", 
+        value=f"{mr:.3f}", 
+        delta=f"{mr-mr0:.3f}", 
+        delta_color="inverse",
+        help="Mirror ratio of the stellarator"
+    )
+    
+    m4.metric(
+        label="MHD Stability", 
+        value=f"{mhd:.4f}", 
+        delta=f"{mhd-mhd0:.4f}", 
+        delta_color="inverse",
+        help="MHD stability of the stellarator"
+    )
 
     c1, c2 = st.columns([2, 1])
     
     with c1:
-        if 'optimization_history' in st.session_state.current_config:
+        if 'optimization_history' in st.session_state.current_config and st.session_state.current_config['optimization_history']:
             st.markdown("### Convergence History")
-            st.area_chart(st.session_state.current_config['optimization_history'], color="#FF4B4B")
-            
+            #st.area_chart(st.session_state.current_config['optimization_history'], color="#FF4B4B")
+            st.line_chart(st.session_state.current_config['optimization_history'], color="#FF4B4B")
     with c2:
         st.markdown("### Export")
         import json

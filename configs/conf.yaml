@@ -12,7 +12,7 @@ ml:
         batch_size: 256
         epochs: 25
         learning_rate: 1e-3
-        layers: [1024, 512, 128, 512, 256, 128]
+        layers: [2048, 1024, 512, 256, 128]
         activation: "gelu"
 
     models:
@@ -26,7 +26,7 @@ ml:
         filepath: "models/w_mhd_model.pth"
         train:
           learning_rate: 1e-4
-          epochs: 20
+          epochs: 40
 
       mirror_ratio:
         filepath: "models/mirror_ratio_model.pth"
