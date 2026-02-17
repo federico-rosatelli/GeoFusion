@@ -4,13 +4,16 @@
             "struct": [
                 {
                     "type": "layer",
-                    "type_layer": "linear",
-                    "out_features": 2048
+                    "type_layer": "conv1d",
+                    "in_channels": 1,
+                    "out_channels": 64,
+                    "kernel_size": 5,
+                    "padding": 2
                 },
                 {
                     "type": "layer",
                     "type_layer": "batch_norm1d",
-                    "features": 2048
+                    "features": 64
                 },
                 {
                     "type": "activation",
@@ -18,8 +21,34 @@
                 },
                 {
                     "type": "layer",
-                    "type_layer": "dropout",
-                    "p": 0.1
+                    "type_layer": "max_pool1d",
+                    "kernel_size": 2
+                },
+                {
+                    "type": "layer",
+                    "type_layer": "conv1d",
+                    "in_channels": 64,
+                    "out_channels": 128,
+                    "kernel_size": 3,
+                    "padding": 1
+                },
+                {
+                    "type": "layer",
+                    "type_layer": "batch_norm1d",
+                    "features": 128
+                },
+                {
+                    "type": "activation",
+                    "name": "gelu"
+                },
+                {
+                    "type": "layer",
+                    "type_layer": "max_pool1d",
+                    "kernel_size": 2
+                },
+                {
+                    "type": "layer",
+                    "type_layer": "flatten"
                 },
                 {
                     "type": "layer",
@@ -77,34 +106,6 @@
                     "type": "layer",
                     "type_layer": "dropout",
                     "p": 0.1
-                },
-                {
-                    "type": "layer",
-                    "type_layer": "linear",
-                    "out_features": 256
-                },
-                {
-                    "type": "layer",
-                    "type_layer": "batch_norm1d",
-                    "features": 256
-                },
-                {
-                    "type": "activation",
-                    "name": "gelu"
-                },
-                {
-                    "type": "layer",
-                    "type_layer": "linear",
-                    "out_features": 128
-                },
-                {
-                    "type": "layer",
-                    "type_layer": "batch_norm1d",
-                    "features": 128
-                },
-                {
-                    "type": "activation",
-                    "name": "gelu"
                 },
                 {
                     "type": "layer",
