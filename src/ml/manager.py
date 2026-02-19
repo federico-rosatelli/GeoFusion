@@ -76,3 +76,6 @@ class NeuralManager:
         for metric in self.models.models.keys():
             self.train_model(metric)
         print("All models trained and saved.")
+    
+    def getModels(self):
+        return self.models

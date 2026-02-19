@@ -44,26 +44,61 @@ if __name__ == "__main__":
 
 
 
-def plot_loss(metric_name, loss_history):
-    
+def plot_loss(metric_name, history):
     try:
-        
-        plt.figure(figsize=(8, 5))
-        
-        plt.plot(range(1, len(loss_history) + 1), loss_history, 'o-', color='#d62728', linewidth=2, markersize=5, label='MSE Loss')
+        plot_dir = "public/images"
+        if not os.path.exists(plot_dir):
+            os.makedirs(plot_dir)
 
+        if isinstance(history, tuple):
+            history_dict = {
+                'train_loss': history[0],
+                'val_loss': history[1],
+                'val_accuracy': history[2]
+            }
+        elif isinstance(history, dict):
+            history_dict = history
+        else:
+            history_dict = {'train_loss': history, 'val_loss': [], 'val_accuracy': []}
+
+        epochs = range(1, len(history_dict['train_loss']) + 1)
+
+        plt.figure(figsize=(8, 5))
+        plt.plot(epochs, history_dict['train_loss'], 'o-', color='#1f77b4', linewidth=2, markersize=5, label='Train Loss')
         plt.title(f"Training Loss: {metric_name.upper()}", fontsize=14, fontweight='bold', pad=15)
         plt.xlabel("Epochs", fontsize=12)
         plt.ylabel("MSE Loss", fontsize=12)
         plt.yscale('log')
         plt.grid(True, which="both", ls="--", alpha=0.3)
-        
+        plt.legend()
         plt.tight_layout()
+        plt.savefig(os.path.join(plot_dir, f"{metric_name}_train_loss_plot.png"), dpi=300)
+        plt.close()
+
         
-        plot_dir = "public/images"
-        filename = f"{metric_name}_loss_plot.png"
-        file_path = os.path.join(plot_dir, filename)
-        plt.savefig(file_path, dpi=300)
+        plt.figure(figsize=(8, 5))
+        plt.plot(epochs, history_dict['val_loss'], 'o-', color='#ff7f0e', linewidth=2, markersize=5, label='Val Loss')
+        plt.title(f"Validation Loss: {metric_name.upper()}", fontsize=14, fontweight='bold', pad=15)
+        plt.xlabel("Epochs", fontsize=12)
+        plt.ylabel("MSE Loss", fontsize=12)
+        plt.yscale('log')
+        plt.grid(True, which="both", ls="--", alpha=0.3)
+        plt.legend()
+        plt.tight_layout()
+        plt.savefig(os.path.join(plot_dir, f"{metric_name}_val_loss_plot.png"), dpi=300)
+        plt.close()
+
         
+        plt.figure(figsize=(8, 5))
+        plt.plot(epochs, history_dict['val_accuracy'], 'o-', color='#2ca02c', linewidth=2, markersize=5, label='R2 Score')
+        plt.title(f"Validation Accuracy (R2): {metric_name.upper()}", fontsize=14, fontweight='bold', pad=15)
+        plt.xlabel("Epochs", fontsize=12)
+        plt.ylabel("R2 Score", fontsize=12)
+        plt.grid(True, which="both", ls="--", alpha=0.3)
+        plt.legend()
+        plt.tight_layout()
+        plt.savefig(os.path.join(plot_dir, f"{metric_name}_accuracy_plot.png"), dpi=300)
+        plt.close()
+
     except Exception as e:
-        print(f"Error loading or plotting loss data: {e}")
+        print(f"Error loading or plotting loss data for {metric_name}: {e}")

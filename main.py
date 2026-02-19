@@ -4,7 +4,13 @@ from src.ml.manager import NeuralManager
 
 def main(args):
     manager = NeuralManager(config_path=args.config, struct_path=args.struct, force_retrain=args.force)
-    manager.train_all()
+    
+    models = manager.getModels()
+
+    for model in models.models:
+        models.plot_loss(model)
+    
+    
 
 
 if __name__ == "__main__":

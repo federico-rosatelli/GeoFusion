@@ -1,19 +1,17 @@
 {
     "models": {
         "qi": {
+            "_comment": "Neural Network for QI",
             "struct": [
                 {
                     "type": "layer",
-                    "type_layer": "conv1d",
-                    "in_channels": 1,
-                    "out_channels": 64,
-                    "kernel_size": 5,
-                    "padding": 2
+                    "type_layer": "linear",
+                    "out_features": 512
                 },
                 {
                     "type": "layer",
                     "type_layer": "batch_norm1d",
-                    "features": 64
+                    "features": 512
                 },
                 {
                     "type": "activation",
@@ -21,44 +19,18 @@
                 },
                 {
                     "type": "layer",
-                    "type_layer": "max_pool1d",
-                    "kernel_size": 2
-                },
-                {
-                    "type": "layer",
-                    "type_layer": "conv1d",
-                    "in_channels": 64,
-                    "out_channels": 128,
-                    "kernel_size": 3,
-                    "padding": 1
-                },
-                {
-                    "type": "layer",
-                    "type_layer": "batch_norm1d",
-                    "features": 128
-                },
-                {
-                    "type": "activation",
-                    "name": "gelu"
-                },
-                {
-                    "type": "layer",
-                    "type_layer": "max_pool1d",
-                    "kernel_size": 2
-                },
-                {
-                    "type": "layer",
-                    "type_layer": "flatten"
+                    "type_layer": "dropout",
+                    "p": 0.15
                 },
                 {
                     "type": "layer",
                     "type_layer": "linear",
-                    "out_features": 2048
+                    "out_features": 1024
                 },
                 {
                     "type": "layer",
                     "type_layer": "batch_norm1d",
-                    "features": 2048
+                    "features": 1024
                 },
                 {
                     "type": "activation",
@@ -105,7 +77,40 @@
                 {
                     "type": "layer",
                     "type_layer": "dropout",
+                    "p": 0.15
+                },
+                {
+                    "type": "layer",
+                    "type_layer": "linear",
+                    "out_features": 256
+                },
+                {
+                    "type": "layer",
+                    "type_layer": "batch_norm1d",
+                    "features": 256
+                },
+                {
+                    "type": "activation",
+                    "name": "gelu"
+                },
+                {
+                    "type": "layer",
+                    "type_layer": "dropout",
                     "p": 0.1
+                },
+                {
+                    "type": "layer",
+                    "type_layer": "linear",
+                    "out_features": 128
+                },
+                {
+                    "type": "layer",
+                    "type_layer": "batch_norm1d",
+                    "features": 128
+                },
+                {
+                    "type": "activation",
+                    "name": "gelu"
                 },
                 {
                     "type": "layer",
@@ -215,6 +220,118 @@
                     "type": "layer",
                     "type_layer": "batch_norm1d",
                     "features": 128
+                },
+                {
+                    "type": "activation",
+                    "name": "gelu"
+                },
+                {
+                    "type": "layer",
+                    "type_layer": "linear",
+                    "out_features": 1
+                }
+            ]
+        },
+        "iota_edge": {
+            "struct": [
+                {
+                    "type": "layer",
+                    "type_layer": "linear",
+                    "out_features": 1024
+                },
+                {
+                    "type": "layer",
+                    "type_layer": "batch_norm1d",
+                    "features": 1024
+                },
+                {
+                    "type": "activation",
+                    "name": "gelu"
+                },
+                {
+                    "type": "layer",
+                    "type_layer": "dropout",
+                    "p": 0.1
+                },
+                {
+                    "type": "layer",
+                    "type_layer": "linear",
+                    "out_features": 512
+                },
+                {
+                    "type": "layer",
+                    "type_layer": "batch_norm1d",
+                    "features": 512
+                },
+                {
+                    "type": "activation",
+                    "name": "gelu"
+                },
+                {
+                    "type": "layer",
+                    "type_layer": "linear",
+                    "out_features": 256
+                },
+                {
+                    "type": "layer",
+                    "type_layer": "batch_norm1d",
+                    "features": 256
+                },
+                {
+                    "type": "activation",
+                    "name": "gelu"
+                },
+                {
+                    "type": "layer",
+                    "type_layer": "linear",
+                    "out_features": 1
+                }
+            ]
+        },
+        "mirror_ratio": {
+            "struct": [
+                {
+                    "type": "layer",
+                    "type_layer": "linear",
+                    "out_features": 1024
+                },
+                {
+                    "type": "layer",
+                    "type_layer": "batch_norm1d",
+                    "features": 1024
+                },
+                {
+                    "type": "activation",
+                    "name": "gelu"
+                },
+                {
+                    "type": "layer",
+                    "type_layer": "dropout",
+                    "p": 0.1
+                },
+                {
+                    "type": "layer",
+                    "type_layer": "linear",
+                    "out_features": 512
+                },
+                {
+                    "type": "layer",
+                    "type_layer": "batch_norm1d",
+                    "features": 512
+                },
+                {
+                    "type": "activation",
+                    "name": "gelu"
+                },
+                {
+                    "type": "layer",
+                    "type_layer": "linear",
+                    "out_features": 256
+                },
+                {
+                    "type": "layer",
+                    "type_layer": "batch_norm1d",
+                    "features": 256
                 },
                 {
                     "type": "activation",

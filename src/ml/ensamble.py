@@ -95,17 +95,23 @@ class StellaratorEnsemble:
         return self.models
     
     def plot_loss(self, metric):
-        if self.loss_histories[metric] != []:
-            loss_history = self.loss_histories[metric]
-            
+
+        if self.loss_histories.get(metric):
+            history = self.loss_histories[metric]
         else:
+            
             model_path = self.models_conf[metric]["filepath"]
             base_path, _ = os.path.splitext(model_path)
             log_path = f"{base_path}_loss.csv"
+            
             if not os.path.exists(log_path):
-                print(f"Log file for metric '{metric}' not found at {log_path}.")
+                print(f"No history available and log file for metric '{metric}' not found.")
                 return None
+            
             df = pd.read_csv(log_path)
-            loss_history = df['loss'].tolist()
-        
-        plot_loss(metric, loss_history)
+            history = {
+                'train_loss': df['train_loss'].tolist(),
+                'val_loss': df['val_loss'].tolist(),
+                'val_accuracy': df['val_accuracy'].tolist()
+            }
+        plot_loss(metric, history)

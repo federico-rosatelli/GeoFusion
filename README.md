@@ -16,6 +16,7 @@ GeoFusion is an interactive platform developed to assist in the geometric design
 *   **Geometric Optimization**: Leverage physics-based algorithms to find optimal shapes, prioritizing either:
     *   **Coil Simplicity**: Reducing the complexity of the external magnets to ensure build feasibility.
     *   **MHD Stability**: Optimizing the geometry for stable plasma confinement.
+*   **ML Surrogate Models**: Fast approximation of complex stellarator metrics (e.g., Quasi-Isodynamicity, MHD Stability) using Neural Networks, enabling rapid optimization loops.
 *   **Real-Time Feedback**: Adjust Fourier modes manually and instantly monitor key metrics—such as Aspect Ratio and Curvature—ensuring a tight feedback loop during the design process.
 
 ## Technologies Used
@@ -23,6 +24,7 @@ GeoFusion is an interactive platform developed to assist in the geometric design
 ![Plotly](https://img.shields.io/badge/Plotly-3F4F75?style=for-the-badge&logo=plotly&logoColor=white)
 ![NumPy](https://img.shields.io/badge/numpy-%23013243.svg?style=for-the-badge&logo=numpy&logoColor=white)
 ![SciPy](https://img.shields.io/badge/SciPy-%230C55A5.svg?style=for-the-badge&logo=scipy&logoColor=%23ffffff)
+![PyTorch](https://img.shields.io/badge/PyTorch-%23EE4C2C.svg?style=for-the-badge&logo=PyTorch&logoColor=white)
 
 ## Getting Started
 To run the application locally, ensure you have the necessary dependencies installed:
@@ -37,11 +39,23 @@ To run the application locally, ensure you have the necessary dependencies insta
     streamlit run app/gui_app.py
     ```
 
+3.  **Train Surrogate Models**
+    To train the neural network surrogates defined in `configs/model_struct.json`:
+    ```bash
+    python neural.py --config configs/conf.yaml --struct configs/model_struct.json
+    ```
+
+## Machine Learning Surrogates
+The project now includes a flexible surrogate modeling system to approximate expensive physics calculations:
+-   **Configurable Architectures**: Neural network structures (Layers, Activations, Dimensions) are defined dynamically in `configs/model_struct.json`.
+-   **Supported Layers**: Supports Linear (MLP), Conv1d (CNN), BatchNorm, Dropout, MaxPool1d, and Flatten layers.
+-   **Hybrid Models**: Capable of handling both flat feature vectors and sequence-based inputs (e.g., Fourier coefficients treated as signals).
+
 ## Future Work / To-Do
 The current `GeoFusion` project requires the following updates to align with the state-of-the-art:
 
-### Physics Engine
-- [ ] **Interface with VMEC++ or DESC**: The current magnetic field proxy (`1/R`) is insufficient for accurate optimization. Integration with a full MHD equilibrium solver like VMEC++ or DESC is required.
+### Physics Engine & Validation
+- [ ] **Interface with VMEC++ or DESC**: While surrogates provide fast approximations, integration with a full MHD equilibrium solver like VMEC++ or DESC is required for validation and training data generation.
     - *Current*: `src/physics/magnetic.py` uses analytical approximations.
     - *Goal*: Call VMEC++ or DESC to get real `B` field and equilibria.
 

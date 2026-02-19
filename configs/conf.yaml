@@ -10,8 +10,8 @@ ml:
       input_dim: 90
       train:
         batch_size: 256
-        epochs: 25
-        learning_rate: 1e-3
+        epochs: 50
+        learning_rate: 5e-4
         layers: [2048, 1024, 512, 256, 128]
         activation: "gelu"
 
@@ -19,13 +19,12 @@ ml:
       qi:
         filepath: "models/qi_model.pth"
         train:
-          learning_rate: 1e-4
+          learning_rate: 3e-4
           epochs: 100
 
       w_mhd:
         filepath: "models/w_mhd_model.pth"
         train:
-          learning_rate: 1e-4
           epochs: 40
 
       mirror_ratio:
