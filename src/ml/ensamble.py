@@ -53,7 +53,7 @@ class StellaratorEnsemble:
         return save_path
     
     def save_loss_log(self, metric):
-        epochs = self.models_conf[metric]["train"]["epochs"]
+        #epochs = self.models_conf[metric]["train"]["epochs"]
         model_path = self.models_conf[metric]["filepath"]
         history = self.loss_histories[metric]
         if self.loss_histories[metric] == {}:
@@ -66,7 +66,7 @@ class StellaratorEnsemble:
             with open(log_path, 'w', newline='') as f:
                 writer = csv.writer(f)
                 writer.writerow(['epoch', 'train_loss', 'val_loss', 'val_accuracy'])
-                for i in range(epochs):
+                for i in range(len(history['train_loss'])):
                     writer.writerow([i + 1, history['train_loss'][i], history['val_loss'][i], history['val_accuracy'][i]])
         except Exception as e:
             print(f"Error saving loss log for {metric}: {e}")

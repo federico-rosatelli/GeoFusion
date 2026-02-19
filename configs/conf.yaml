@@ -25,7 +25,7 @@ ml:
       w_mhd:
         filepath: "models/w_mhd_model.pth"
         train:
-          epochs: 40
+          epochs: 60
 
       mirror_ratio:
         filepath: "models/mirror_ratio_model.pth"
