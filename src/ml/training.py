@@ -7,7 +7,7 @@ import numpy as np
 from src.utils.config import getLogger
 
 
-LOG_TRANSFORM_METRICS = {'qi', 'flux_compression', 'min_mag_grad_length'}
+LOG_TRANSFORM_METRICS = ('qi')
 
 HUBER_DELTA = 0.5
 
@@ -21,6 +21,24 @@ def _inverse_transform(y: torch.Tensor, metric: str):
     if metric in LOG_TRANSFORM_METRICS:
         return torch.exp(y)
     return y
+
+class EarlyStopping:
+    def __init__(self, patience: int = 10, min_delta: float = 1e-5):
+        self.patience = patience
+        self.min_delta = min_delta
+        self.counter = 0
+        self.best_loss = float('inf')
+        self.should_stop = False
+
+    def step(self, val_loss: float) -> bool:
+        if val_loss < self.best_loss - self.min_delta:
+            self.best_loss = val_loss
+            self.counter = 0
+        else:
+            self.counter += 1
+            if self.counter >= self.patience:
+                self.should_stop = True
+        return self.should_stop
 
 
 
@@ -37,6 +55,8 @@ def train_model(model, train_loader, val_loader, target, epochs=10, lr=1e-3, dev
     optimizer = optim.AdamW(model.parameters(), lr=lr, weight_decay=1e-4)
     
     scheduler = optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, T_0=max(5, epochs // 4), T_mult=2, eta_min=lr * 1e-3)
+
+    early_stopping = EarlyStopping(10,1e-5)
 
     print(f"Starting training on device: {device}")
     history = {'train_loss': [], 'val_loss': [], 'val_accuracy': []}
@@ -109,6 +129,11 @@ def train_model(model, train_loader, val_loader, target, epochs=10, lr=1e-3, dev
         scheduler.step(avg_loss)
         print(f"\tEpoch {epoch+1} Summary | Avg Loss: {avg_loss:.6f} | Val Loss: {avg_val_loss:.6f} | Val Accuracy: {val_accuracy:.6f} | LR: {current_lr:.1e}")
         logger.info(f"\tEpoch {epoch+1} Summary | Avg Loss: {avg_loss:.6f} | Val Loss: {avg_val_loss:.6f} | Val Accuracy: {val_accuracy:.6f} | LR: {current_lr:.1e}")
+
+        if early_stopping.step(avg_val_loss):
+            print(f"Early stopping triggered. Epoch:{epoch+1}")
+            logger.info(f"Early stopping triggered. Epoch:{epoch+1}")
+            break
 
 
     if best_state is not None:
