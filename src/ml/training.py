@@ -54,8 +54,8 @@ def train_model(model, train_loader, val_loader, target, epochs=10, lr=1e-3, dev
             batch_X, batch_y = batch_X.to(device), batch_y[target].to(device).float().view(-1, 1)
             
             batch_y_transformed = _apply_transform(batch_y, target)
-
             preds = model(batch_X)
+            optimizer.zero_grad()
             loss = criterion(preds, batch_y_transformed)
             loss.backward()
             nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
@@ -83,7 +83,7 @@ def train_model(model, train_loader, val_loader, target, epochs=10, lr=1e-3, dev
                 pred = model(batch_X)
                 loss = criterion(pred, y_transformed)
                 val_loss_accum += loss.item()
-                val_pred = _inverse_transform(pred, target).cpu().numpy()
+                val_pred = _inverse_transform(pred, target)
 
 
                 pbar.set_postfix({'loss': f"{loss.item():.6f}"})

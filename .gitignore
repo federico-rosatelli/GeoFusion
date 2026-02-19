@@ -52,3 +52,4 @@ data.json
 *_model.pth
 *.pth
 *csv
+*png

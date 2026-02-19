@@ -7,8 +7,9 @@ def main(args):
     
     models = manager.getModels()
 
-    for model in models.models:
-        models.plot_loss(model)
+    # for model in models.models:
+    #     models.plot_loss(model)
+    manager.train_all()
     
     
 

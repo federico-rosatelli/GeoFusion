@@ -136,5 +136,10 @@ class JSONModel(nn.Module):
             
             if x.dim() == 2:
                 x = x.unsqueeze(1)
+        else:
+            if x.dim() == 1:
+                x = x.unsqueeze(0)
+            if x.dim() > 2:
+                x = x.flatten(start_dim=1) 
             
         return self.net(x)
