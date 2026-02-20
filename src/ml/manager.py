@@ -79,3 +79,8 @@ class NeuralManager:
     
     def getModels(self):
         return self.models
+    
+    
+    def plot_all(self):
+        for metric in self.models.models.keys():
+            self.models.plot_loss(metric)

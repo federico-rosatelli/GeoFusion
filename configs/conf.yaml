@@ -43,3 +43,11 @@ physics:
     w_mhd: 10.0
     mirror_ratio: 2.0
     iota_edge: 5.0
+    reg: 0.0001
+    aspect: 0.0
+  scales:
+    qi: 0.05
+    w_mhd: 0.02
+    iota_edge: 0.4
+    aspect: 8.0
+    mirror_ratio: 0.2

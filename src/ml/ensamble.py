@@ -80,6 +80,8 @@ class StellaratorEnsemble:
                 pred = model(x)
                 if metric == 'w_mhd':
                     pred = pred - 4.0
+                if metric == 'qi':
+                    pred = torch.exp(pred)
                 predictions[metric] = pred
         
         return predictions

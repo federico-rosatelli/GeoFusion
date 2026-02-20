@@ -27,6 +27,10 @@ def getLogger(name:str, config_file:str="configs/logger.yaml", filename=None) ->
     logger = logging.getLogger(name)
     return logger
 
+def load_physics(conf_yaml="configs/conf.yaml"):
+    conf = getConfigYAML(conf_yaml)
+    return conf['physics']
+
 
 def load_config(config_yaml:str, config_json:str):
     full_config = getConfigYAML(config_yaml)

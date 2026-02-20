@@ -53,7 +53,7 @@ def spectral_regularization(x_tensor):
     return reg_loss
 
 
-def optimize_stellarator(initial_config, problem_type="simple-to-build", max_iter=100):
+def optimize_stellarator(initial_config, problem_type="GeoFusion-nn", max_iter=100, weigths=WEIGHTS, scales=SCALES):
     """
     Main optimization loop using scipy.optimize.
     
@@ -100,8 +100,9 @@ def optimize_stellarator(initial_config, problem_type="simple-to-build", max_ite
             metrics_val = objectives.calculate_geo_fusion_nn(R_mn, Z_mn, models)
 
             loss = 0.0
-        
-            loss += WEIGHTS['qi'] * (metrics_val['qi'] / SCALES['qi'])**2
+            
+            qi_val = metrics_val['qi']
+            loss += WEIGHTS['qi'] * (qi_val / SCALES['qi'])**2
                 
         
             iota_val = metrics_val['iota_edge']
@@ -123,26 +124,31 @@ def optimize_stellarator(initial_config, problem_type="simple-to-build", max_ite
             
             loss_val = loss.item()
             grad_val = x_tensor.grad.detach().cpu().numpy().astype(np.float64)
-            
-            print(f"Loss: {loss_val:.6f} | Reg: {reg_loss.item():.2e}", end="\033[K\r")
-            
-            return loss_val, grad_val
 
 
 
-        elif problem_type == "simple-to-build":
+        elif problem_type == "mhd-stable":
             
-            val = objectives.calculate_coil_simplicity(R_mn, Z_mn, initial_config)
-        else:
+            metrics_val = objectives.calculate_geo_fusion_nn(R_mn, Z_mn, models)
+
+            loss = 0.0
             
-            val = objectives.calculate_mhd_stability(R_mn, Z_mn, initial_config)
+            well_val = metrics_val['w_mhd']
+            loss += WEIGHTS['well'] * (torch.relu(well_val) / SCALES['well'])**2
+
+
+            reg_loss = spectral_regularization(x_tensor)
+            loss += WEIGHTS['reg'] * reg_loss
+            
+            loss.backward()
+            
+            loss_val = loss.item()
+            grad_val = x_tensor.grad.detach().cpu().numpy().astype(np.float64)
             
         
-        
-        reg = 0.01 * (np.sum(x**2))
-        
-        return val + reg
-
+        print(f"Loss: {loss_val:.6f} | Reg: {reg_loss.item():.2e}", end="\033[K\r")
+            
+        return loss_val, grad_val
 
     
 
@@ -154,7 +160,7 @@ def optimize_stellarator(initial_config, problem_type="simple-to-build", max_ite
     def ar_cons(x):
         r, z = reshape_coeffs(x)
         current_ar = geometry.calculate_aspect_ratio(r, z)
-        return current_ar - 6.0
+        return (current_ar - targets['aspect_ratio']) / targets['aspect_ratio']
         
     cons= (
         {'type': 'eq',   'fun': volume_cons},

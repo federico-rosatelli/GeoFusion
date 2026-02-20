@@ -9,7 +9,7 @@ from src.optimization.optimizer import optimize_stellarator
 from src.ml.ensamble import StellaratorEnsemble
 import torch
 from src.physics import geometry
-from src.optimization import objectives
+from src.utils.config import load_physics
 
 
 st.set_page_config(page_title="Stellarator Optimizer", layout="wide")
@@ -26,6 +26,11 @@ def load_models():
     models = StellaratorEnsemble("configs/conf.yaml", "configs/model_struct.json")
     models.load_models()
     return models
+
+@st.cache_data
+def load_metric_physics():
+    return load_physics()
+
 
 def plot_surface_plotly(X, Y, Z):
     X = np.concatenate((X, X[0:1, :]), axis=0)
@@ -116,6 +121,9 @@ def main():
     
     models = load_models()
 
+    physics = load_metric_physics()
+
+
     with st.sidebar:
         st.header("Configuration")
         
@@ -151,7 +159,6 @@ def main():
                 if 0 <= m < arr.shape[0] and 0 <= idx < arr.shape[1]:
                     arr[m, idx] = val
                     st.session_state.current_config[arr_name] = arr.tolist()
-                    print(arr)
 
 
             def synced_parameter(label, arr_name, m, n, min_v, max_v, step):
@@ -251,12 +258,12 @@ def main():
         st.divider()
 
         st.header("Optimization")
-        problem_type = st.selectbox("Objective", ["simple-to-build", "mhd-stable", "GeoFusion-nn"], index=0)
+        problem_type = st.selectbox("Objective", ["GeoFusion-nn", "mhd-stable"], index=0)
         max_iter = st.number_input("Iterations", 1, 500, 20)
         
         if st.button("Start Optimization", type="primary"):
             with st.spinner("Optimizing geometry..."):
-                optimized_res = optimize_stellarator(current_config, problem_type=problem_type, max_iter=max_iter)
+                optimized_res = optimize_stellarator(current_config, problem_type=problem_type, max_iter=max_iter, weigths=physics['weights'], scales=physics['scales'])
                 st.session_state.current_config = optimized_res
                 st.success("Optimization Complete!")
                 st.rerun()
@@ -298,9 +305,10 @@ def main():
     preds = models.predict(input_tensor)
     
     mhd = preds['w_mhd'].item()
+    qi = preds['qi'].item()
     
-    R_init = np.array(st.session_state.current_config['boundary.r_cos'])
-    Z_init = np.array(st.session_state.current_config['boundary.z_sin'])
+    # R_init = np.array(st.session_state.current_config['boundary.r_cos'])
+    # Z_init = np.array(st.session_state.current_config['boundary.z_sin'])
     
     ar0 = geometry.calculate_aspect_ratio(R_init, Z_init)
     vol0 = geometry.calculate_volume(R_init, Z_init)
@@ -312,10 +320,13 @@ def main():
     preds0 = models.predict(input_tensor0)
     
     mhd0 = preds0['w_mhd'].item()
+    qi0 = preds0['qi'].item()
+    
+    
 
     st.markdown("### Metrics Dashboard")
     
-    m1, m2, m3, m4 = st.columns(4)
+    m1, m2, m3, m4, m5 = st.columns(5)
     
     m1.metric(
         label="Aspect Ratio", 
@@ -344,7 +355,15 @@ def main():
         value=f"{mhd:.4f}", 
         delta=f"{mhd-mhd0:.4f}", 
         delta_color="inverse",
-        help="MHD stability of the stellarator"
+        help="MHD stability approximation of the stellarator"
+    )
+
+    m5.metric(
+        label="QI", 
+        value=f"{qi:.4f}", 
+        delta=f"{qi-qi0:.4f}", 
+        delta_color="inverse",
+        help="QI approximation of the stellarator"
     )
 
     c1, c2 = st.columns([2, 1])
