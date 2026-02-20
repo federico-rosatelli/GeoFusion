@@ -79,7 +79,7 @@ class StellaratorEnsemble:
             for metric, model in self.models.items():
                 pred = model(x)
                 if metric == 'w_mhd':
-                    pred = pred * 4.0
+                    pred = pred - 4.0
                 predictions[metric] = pred
         
         return predictions

@@ -4,7 +4,7 @@ description: Configuration for Stellarator Optimization Ensemble
 
 ml:
   device: "cuda"
-  force_retrain: true
+  force_retrain: false
   ensemble:
     default:
       input_dim: 90

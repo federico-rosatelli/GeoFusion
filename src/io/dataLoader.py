@@ -102,7 +102,7 @@ class StellaratorDataModule:
                 y_dict = {}
                 for target_col in self.target_cols:
                     if target_col[1] == 'w_mhd':
-                        y_dict[target_col[1]] = row[target_col[0]] / 4.0
+                        y_dict[target_col[1]] = row[target_col[0]] + 4.0
                     else:
                         y_dict[target_col[1]] = row[target_col[0]]
                 y_list.append(y_dict)
