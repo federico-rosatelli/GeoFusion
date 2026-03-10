@@ -1,17 +1,27 @@
 import argparse
+from src.io.loader import load_constellaration_dataset
 from src.ml.manager import NeuralManager
+from testers import test_optimization
 
+
+from src.visualization.plot_accuracy import plot_multi_accuracy_bars, plot_single_accuracy_bars, plot_accuracy_comparison
 
 def main(args):
 
-    manager = NeuralManager(config_path=args.config, struct_path=args.struct, force_retrain=args.force)
     
+    if args.test:
+        test_optimization.test_models()
+
+
     if args.train:
+        manager = NeuralManager(config_path=args.config, struct_path=args.struct, force_retrain=args.force)
         manager.train_all()
     
     if args.plot:
-        manager.plot_all()
-    
+        
+        plot_single_accuracy_bars()
+        plot_multi_accuracy_bars()
+        plot_accuracy_comparison()    
     
     
 
@@ -30,6 +40,11 @@ if __name__ == "__main__":
         type=str,
         default="configs/model_struct.json",
         help="Path to the model architecture JSON file."
+    )
+    parser.add_argument(
+        "--test",
+        action="store_true",
+        help="Run tests."
     )
     parser.add_argument(
         "--train",

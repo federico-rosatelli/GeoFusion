@@ -41,8 +41,8 @@ def plot_surface_plotly(X, Y, Z):
     Y = np.concatenate((Y, Y[:, 0:1]), axis=1)
     Z = np.concatenate((Z, Z[:, 0:1]), axis=1)
 
-    fig = go.Figure(data=[go.Surface(x=X, y=Y, z=Z, colorscale='Viridis', opacity=0.9)])
-    fig.update_layout(title='Plasma Boundary', autosize=True,
+    fig = go.Figure(data=[go.Surface(x=X, y=Y, z=Z, colorscale='Viridis')])
+    fig.update_layout(autosize=True,
                       scene=dict(
                           xaxis_title='X [m]',
                           yaxis_title='Y [m]',
@@ -50,8 +50,78 @@ def plot_surface_plotly(X, Y, Z):
                           aspectmode='data'
                       ),
                       margin=dict(l=0, r=0, b=0, t=30))
+    # fig.update_scenes(xaxis_visible=False, yaxis_visible=False, zaxis_visible=False)
+    # fig.update_coloraxes(showscale=False)
+    # fig.update_traces(showscale=False)
+    # fig.update_layout(
+    #     scene=dict(bgcolor="rgba(0,0,0,0)"),
+    #     paper_bgcolor="rgba(0,0,0,0)",
+    #     plot_bgcolor="rgba(0,0,0,0)"
+    # )
+    
     return fig
 
+@st.dialog("Configuration Gallery", width="large")
+def show_gallery_dialog(dataset):
+    if 'gallery_page' not in st.session_state:
+        st.session_state.gallery_page = 0
+        
+    ITEMS_PER_PAGE = 10
+    total_items = len(dataset)
+    total_pages = (total_items + ITEMS_PER_PAGE - 1) // ITEMS_PER_PAGE
+    
+    col_prev, col_page, col_next, col_jump, col_go = st.columns([1, 1, 1, 2, 1])
+    
+    with col_prev:
+        if st.button("Back", disabled=(st.session_state.gallery_page == 0), width='stretch'):
+            st.session_state.gallery_page -= 1
+            
+    with col_page:
+        st.markdown(f"<div style='text-align: center; padding-top: 10px;'><b>Page {st.session_state.gallery_page + 1} / {total_pages}</b></div>", unsafe_allow_html=True)
+        
+    with col_next:
+        if st.button("Next", disabled=(st.session_state.gallery_page >= total_pages - 1), width='stretch'):
+            st.session_state.gallery_page += 1
+            
+    with col_jump:
+        
+        jump_idx = st.number_input("Go to Page:", min_value=0, max_value=total_items-1, value=st.session_state.gallery_page * ITEMS_PER_PAGE, step=1, label_visibility="collapsed")
+        
+    with col_go:
+        if st.button("Go to Page", width='stretch'):
+            
+            st.session_state.gallery_page = jump_idx // ITEMS_PER_PAGE
+            
+
+            
+    st.divider()
+    
+    start_idx = st.session_state.gallery_page * ITEMS_PER_PAGE
+    end_idx = min(start_idx + ITEMS_PER_PAGE, total_items)
+    
+    cols = st.columns(2)
+    
+    for i in range(start_idx, end_idx):
+        config = dataset[i]
+        col_idx = (i - start_idx) % 2
+        
+        with cols[col_idx]:
+            is_target = (i == jump_idx)
+            header_text = f"**Config {i}** {'*' if is_target else ''}"
+            st.markdown(header_text)
+            
+            surface_data = geometry.get_surface_coordinates(config)
+            fig = plot_surface_plotly(surface_data['X'], surface_data['Y'], surface_data['Z'])
+            fig.update_layout(height=250, margin=dict(l=0, r=0, b=0, t=0), showlegend=False)
+            
+            st.plotly_chart(fig, width='stretch', key=f"preview_plot_{i}")
+            
+            if st.button(f"Select", key=f"select_btn_{i}", width='stretch'):
+                st.session_state.config_index_prev = i
+                st.session_state.current_config = config.copy()
+                st.session_state.current_config['boundary.r_cos'] = [list(x) for x in config['boundary.r_cos']]
+                st.session_state.current_config['boundary.z_sin'] = [list(x) for x in config['boundary.z_sin']]
+                st.rerun()
 
 def apply_custom_css():
     st.markdown("""
@@ -127,15 +197,19 @@ def main():
     with st.sidebar:
         st.header("Configuration")
         
-        config_index = st.number_input("Select Config Index", min_value=0, max_value=len(dataset)-1, value=0, step=1)
-        initial_config = dataset[config_index]
         
-        if 'current_config' not in st.session_state or st.session_state.get('config_index_prev') != config_index:
+        if 'current_config' not in st.session_state:
+            st.session_state.config_index_prev = 0
+            initial_config = dataset[0]
             st.session_state.current_config = initial_config.copy()
             st.session_state.current_config['boundary.r_cos'] = [list(x) for x in initial_config['boundary.r_cos']]
             st.session_state.current_config['boundary.z_sin'] = [list(x) for x in initial_config['boundary.z_sin']]
-            st.session_state.config_index_prev = config_index
 
+        st.markdown(f"**Current Configuration:** Index `{st.session_state.config_index_prev}`")
+
+        if st.button("View and Select Top 10 Configurations", type="primary"):
+            show_gallery_dialog(dataset)
+            
         current_config = st.session_state.current_config
 
         st.divider()
@@ -273,7 +347,8 @@ def main():
     R_mn = np.array(st.session_state.current_config['boundary.r_cos'])
     Z_mn = np.array(st.session_state.current_config['boundary.z_sin'])
     
-    initial_c = dataset[config_index]
+    saved_index = st.session_state.config_index_prev
+    initial_c = dataset[saved_index]
     R_init = np.array(initial_c['boundary.r_cos'])
     Z_init = np.array(initial_c['boundary.z_sin'])
     
