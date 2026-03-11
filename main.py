@@ -4,7 +4,11 @@ from src.ml.manager import NeuralManager
 from testers import test_optimization
 
 
-from src.visualization.plot_accuracy import plot_multi_accuracy_bars, plot_single_accuracy_bars, plot_accuracy_comparison
+from src.visualization.plot_accuracy import (
+    plot_multi_accuracy_bars, 
+    plot_single_accuracy_bars, 
+    plot_accuracy_comparison
+    )
 
 def main(args):
 
