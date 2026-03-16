@@ -106,7 +106,7 @@ def plot_loss_base(metric_name, history):
 
 
 
-def plot_stellarator_shape(X, Y, Z):
+def plot_stellarator_shape1(X, Y, Z):
     fig = plt.figure(figsize=(10, 8))
     ax = fig.add_subplot(111, projection="3d")
 

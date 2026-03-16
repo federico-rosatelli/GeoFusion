@@ -5,25 +5,15 @@ from src.optimization.optimizer import optimize_stellarator
 from src.ml.ensamble import StellaratorEnsemble
 import json
 import random
-
-def test_optimization():
-    print("Loading dataset...")
-    dataset = load_constellaration_dataset()
-    if not dataset:
-        print("No dataset found.")
-        return
-
-    sample_config = dataset[0]
-    print("Starting optimization test...")
-    
-    
-    _ = optimize_stellarator(sample_config, max_iter=5)
-    
-    print("Optimization test complete.")
+import time
+import matplotlib.pyplot as plt
 
 
-def getRandomData():
-    dataset = load_constellaration_dataset()
+def getDataset():
+    return load_constellaration_dataset()
+
+
+def getRandomData(dataset):
     return dataset[random.randint(0, len(dataset) - 1)]
 
 
@@ -32,7 +22,8 @@ def test_models():
 
     # with open("testers/data_test.json", "r") as f:
     #     data = json.load(f)
-    data = getRandomData()
+    dataset = getDataset()
+    data = getRandomData(dataset)
     
     models = StellaratorEnsemble("configs/conf.yaml", "configs/model_struct.json")
     models.load_models()
@@ -45,8 +36,10 @@ def test_models():
     input_vector = input_vector.unsqueeze(0)
     
     ai_input = input_vector.to("cpu").float()
+    start_time = time.time()
     preds = models.predict(ai_input)
-    print(preds)
+    #print(preds)
+    print(f"Prediction Time: {time.time() - start_time}")
 
     qi_val = preds["qi"].item()    
     iota_val = preds['iota_edge'].item()
@@ -68,4 +61,53 @@ def test_models():
     print(f"W_MHD Accuracy: {well_accuracy}")
     print(f"Mirror Ratio Accuracy: {mr_accuracy}")
 
+
+def testTime(iterations=100):
+
+    print("Testing model time...")
+
+    dataset = getDataset()
     
+    
+    models = StellaratorEnsemble("configs/conf.yaml", "configs/model_struct.json")
+    models.load_models()
+    
+    times = []
+    preds = {
+        "qi": [],
+        "iota_edge": [],
+        "w_mhd": [],
+        "mirror_ratio": []
+    }
+
+    for i in range(iterations):
+        print(f"Testing iteration {i+1}/{iterations}", end="\r")
+        data = getRandomData(dataset)
+        if not data['metrics.qi']:
+            continue
+        R_mn = np.array(data['boundary.r_cos'])
+        Z_mn = np.array(data['boundary.z_sin'])
+
+        input_vector = np.concatenate([R_mn.flatten(), Z_mn.flatten()])
+        input_vector = torch.tensor(input_vector, dtype=torch.float32)
+        input_vector = input_vector.unsqueeze(0)
+        
+        ai_input = input_vector.to("cpu").float()
+        start_time = time.time()
+        _ = models.predict(ai_input)
+        times.append(time.time() - start_time)
+
+    print(f"Average Prediction Time: {np.mean(times)}")
+    print(f"Std Dev Prediction Time: {np.std(times)}")
+    
+    plt.figure(figsize=(8, 5))
+    plt.hist(times, bins=20, color='skyblue', edgecolor='black')
+    plt.title("Prediction Times")
+    plt.xlabel("Time (seconds)")
+    plt.ylabel("Frequency")
+    plt.grid(True, axis='y', linestyle='--', alpha=0.7)
+    plt.axvline(np.mean(times), color='red', linestyle='dashed', linewidth=1.5, label=f'Mean: {np.mean(times):.5f}s')
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig("prediction_times.png")
+    plt.close()

@@ -1,7 +1,10 @@
 import argparse
 from src.io.loader import load_constellaration_dataset
 from src.ml.manager import NeuralManager
+from src.physics import geometry
 from testers import test_optimization
+from src.visualization.plotting import plot_stellarator_shape
+import json
 
 
 from src.visualization.plot_accuracy import (
@@ -15,6 +18,7 @@ def main(args):
     
     if args.test:
         test_optimization.test_models()
+        test_optimization.testTime(1000)
 
 
     if args.train:
@@ -22,6 +26,13 @@ def main(args):
         manager.train_all()
     
     if args.plot:
+
+        with open("/home/fede/Downloads/stellarator_optim_0.json", "r") as f:
+            config = json.load(f)
+
+        conf = geometry.get_surface_coordinates(config)
+
+        plot_stellarator_shape(conf["X"], conf["Y"], conf["Z"], "002")
         
         plot_single_accuracy_bars()
         plot_multi_accuracy_bars()
